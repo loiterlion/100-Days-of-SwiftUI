@@ -41,7 +41,7 @@ struct ContentView: View {
         
                         Section {
                             NavigationLink("Cupcake corner") {
-                                AddressView(order: Order())
+                                AddressView(order: order)
                             }
                         }
                     }
