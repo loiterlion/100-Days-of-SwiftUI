@@ -1,0 +1,2 @@
+Question: What's the difference between "build up to doing something` and "build up to do something"
+Answer: Chatgpt. doing强调逐渐，to do 强调目的和目标

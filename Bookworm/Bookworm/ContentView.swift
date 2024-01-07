@@ -5,34 +5,84 @@
 //  Created by Bruce Wang on 2024/1/4.
 //
 
-import SwiftData
 import SwiftUI
+import SwiftData
+
+struct People: Identifiable {
+    var id = UUID()
+    
+    var name: String
+    var age: Int
+}
 
 struct ContentView: View {
     @Environment(\.modelContext) var modelContext
-    @Query var students: [Student]
+    @Query(sort: [
+        SortDescriptor(\Book.title),
+        SortDescriptor(\Book.author)
+    ]) var books: [Book]
+    
+    @State private var showingAddScreen = false
     
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(students) { student in
-                    Text("\(student.firstName) \(student.lastName)")
+            List{
+                ForEach(books) { book in
+                    NavigationLink(value: book) {
+                        HStack {
+                            EmojiRatingView(rating: book.rating)
+                                .font(.largeTitle)
+                            
+                            VStack(alignment: .leading) {
+                                Text(book.title)
+                                    .font(.headline)
+                                    .foregroundStyle(book.rating <= 1 ? .red : .black)
+                                Text(book.author)
+                                    .font(.subheadline)
+                            }
+                            
+                            Spacer()
+                            
+                            Text(dateAndTimeString(date: book.date))
+                        }
+                    }
+                }
+                .onDelete(perform: deleteBooks)
+            }
+            .navigationTitle("Bookworm")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    EditButton()
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Add Book", systemImage: "plus") {
+                        showingAddScreen.toggle()
+                    }
                 }
             }
-            .navigationTitle("Students")
-            .toolbar {
-                Button(action: {
-                    let firstNames = ["Ginny", "Harry", "Hermione", "Luna", "Ron"]
-                            let lastNames = ["Granger", "Lovegood", "Potter", "Weasley"]
-
-                            let chosenFirstName = firstNames.randomElement()!
-                            let chosenLastName = lastNames.randomElement()!
-                    modelContext.insert(Student(id: UUID(), firstName: chosenFirstName, lastName: chosenLastName))
-                }, label: {
-                    Image(systemName: "plus")
-                })
+            .sheet(isPresented: $showingAddScreen, content: {
+                AddBookView()
+            })
+            .navigationDestination(for: Book.self) { book in
+                DetailView(book: book)
             }
         }
+        
+        
+    }
+    
+    func deleteBooks(at offsets: IndexSet) {
+        for offset in offsets {
+            let book = books[offset]
+            modelContext.delete(book)
+        }
+    }
+    
+    func dateAndTimeString(date: Date) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        
+        return dateFormatter.string(from: date)
     }
 }
 
